@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maiora - Online Encyclopedia</title>
+    <script>
+        // Example blocklist of hateful/illegal keywords
+        const blocklist = ["hate", "violence", "illegal", "racism"];
+        let users = {}; // Store users and their data (in a real app, this would be a database)
+        let articles = {}; // Store articles with their unique article code
+        let blockedUsers = {}; // Store blocked users for tracking blocked period
+
+        function signUpOrLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                alert("Please enter both username and password.");
+                return;
+            }
+
+            // Simulate login or sign-up
+            if (!users[username]) {
+                users[username] = { password, blockedUntil: null, articles: [] };
+                alert("Sign-up successful!");
+            } else if (users[username].password !== password) {
+                alert("Incorrect password.");
+                return;
+            }
+            alert("Login successful!");
+            showUserOptions(username);
+        }
+
+        function showUserOptions(username) {
+            document.getElementById('user-options').style.display = 'block';
+            document.getElementById('login-form').style.display = 'none';
+        }
+
+        function createOrEditArticle() {
+            const articleTitle = document.getElementById('article-title').value;
+            const articleContent = document.getElementById('article-content').value;
+            const username = document.getElementById('username').value;
+
+            // Check if the user is blocked
+            if (blockedUsers[username] && blockedUsers[username] > Date.now()) {
+                alert("You are blocked from editing for 5 days.");
+                return;
+            }
+
+            // Check for hateful or illegal keywords in article content
+            for (const word of blocklist) {
+                if (articleContent.includes(word)) {
+                    blockedUsers[username] = Date.now() + 5 * 24 * 60 * 60 * 1000; // 5 days in milliseconds
+                    alert("Your article contains inappropriate content. You are blocked for 5 days.");
+                    return;
+                }
+            }
+
+            // Create or edit article
+            const articleCode = generateArticleCode();
+            articles[articleCode] = { title: articleTitle, content: articleContent, author: username };
+            users[username].articles.push(articleCode);
+            alert(`Article saved! Share it using the code: ${articleCode}`);
+        }
+
+        function generateArticleCode() {
+            return 'ART' + Math.random().toString(36).substring(2, 15);
+        }
+
+        function searchArticles() {
+            const query = document.getElementById('search-query').value.toLowerCase();
+            const results = [];
+
+            for (const [code, article] of Object.entries(articles)) {
+                if (article.title.toLowerCase().includes(query) || article.content.toLowerCase().includes(query)) {
+                    results.push(`${article.title} (Code: ${code})`);
+                }
+            }
+
+            if (results.length > 0) {
+                alert("Found Articles: \n" + results.join("\n"));
+            } else {
+                alert("No articles found.");
+            }
+        }
+
+    </script>
+</head>
+<body>
+    <h1>Maiora - Online Encyclopedia</h1>
+
+    <!-- Sign-Up/Login Form -->
+    <div id="login-form">
+        <h2>Sign Up or Login</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="signUpOrLogin()">Sign Up / Login</button>
+    </div>
+
+    <!-- User Options after Login -->
+    <div id="user-options" style="display: none;">
+        <h2>Welcome, <span id="username-display"></span></h2>
+        <button onclick="createOrEditArticle()">Create or Edit Article</button><br>
+        <input type="text" id="search-query" placeholder="Search Articles">
+        <button onclick="searchArticles()">Search</button>
+        <br><br>
+
+        <!-- Article Creation Form -->
+        <h3>Create or Edit Article</h3>
+        <input type="text" id="article-title" placeholder="Article Title"><br>
+        <textarea id="article-content" placeholder="Article Content"></textarea><br>
+        <button onclick="createOrEditArticle()">Save Article</button>
+    </div>
+</body>
+</html>
